@@ -1,1 +1,0 @@
-# Starter research prototype uses Python standard library only.
