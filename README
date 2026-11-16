@@ -108,7 +108,6 @@ flowchart TD
 The team's `kalshi_nov13` folder is documented as containing:
 
 ```text
-kalshi_nov13/
 ├── README.md
 ├── SCHEMA.md
 ├── SUBMISSION.md
@@ -124,16 +123,6 @@ kalshi_nov13/
 └── examples/synthetic/
 ```
 
-The original documentation describes these commands **from inside `kalshi_nov13/`** (the actual source files are not bundled with this standalone README):
-
-```bash
-python collector.py --once --data-dir data
-python collector.py --interval 5 --data-dir data
-python -m unittest test_collector.py -v
-python analyze.py --db data/normalized.sqlite3 --out analysis
-```
-
-The documented outputs are `data/raw_responses.jsonl`, `data/normalized.sqlite3`, and analysis reports such as `analysis/candidate_trades.csv` and `analysis/summary.json`. Confirm the commands against the actual code before running them. Keep API keys and sensitive files out of Git.
 
 ## 7. Evaluation and success criteria
 
@@ -166,8 +155,3 @@ A candidate win rate above 1% alone is **not** proof of a profitable, executable
 
 Use feature branches and pull requests for changes to the collector, schema, analysis, and research documentation. Record data sources, time ranges, assumptions, and test results in each relevant pull request. No team member should publish private API credentials or imply synthetic outputs are real-market evidence.
 
-## 10. Limitations and disclaimer
-
-This project is educational and experimental. Public trades and periodic REST order-book snapshots do not establish hypothetical queue position or actual fills. Historical outcomes may contain selection bias, missing periods, or delayed/exceptional settlements. The strategy's statistical edge, executable profitability, and risk profile are **unknown**. No live trading functionality is claimed.
-
-**References:** [Kalshi API documentation](https://docs.kalshi.com/) · [Kalshi Help Center](https://help.kalshi.com/)
