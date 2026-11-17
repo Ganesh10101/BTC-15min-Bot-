@@ -5,18 +5,15 @@
 ## Local commands
 
 ```bash
-python -m unittest discover -s tests -v
-python demo_fixture.py
-python analyze.py --csv examples/synthetic/candidate_trades.csv --out analysis
-python collector.py --once --data-dir data
+python3 collector.py
+python3 collector.py --start 2026-10-17 --end 2026-11-15
 ```
 
-The first three commands use local synthetic data and no credentials. The last command attempts public live **GET** requests and may fail due to network access, API changes or rate limits. It does not backfill 30 days, store SQLite records or place orders.
+The collector uses public read-only **GET** requests, stores results in `data/kalshi_compact.sqlite3`, and requires no API credentials. The default run collects markets closing yesterday in UTC. The second command illustrates a 30-day range. It does not place orders.
 
 ## Research deliverables still outstanding
 
 - At least 30 days of real market/trade/outcome coverage and explicit missing-data report
-- Validated historical API pagination and archive handling
-- SQL normalization and candidate trade extraction
+- Longer-period candidate analysis beyond the initial one-day summary
 - Statistical comparisons of cooldown windows using non-lookahead labels
 - Queue-aware, fee-aware execution simulation and cancellation-latency analysis

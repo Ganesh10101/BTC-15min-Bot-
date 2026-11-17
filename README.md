@@ -2,13 +2,23 @@
 
 **Group 2 — Week 1 Prediction Market Deliverable**  
 **Team:** Ganesh Kaladi · Daniel Petrov · Gautam Tangirala  
-**Status:** Research and read-only data collection; strategy not validated or deployed.
+**Status:** Read-only historical collector implemented; strategy not validated or deployed.
 
 > **Research only.** The existing `kalshi_nov13` work describes a local-fixture-tested, read-only collector. Its example records are **synthetic**, not live trading evidence. This project does not currently place, amend, or cancel orders, and no profitable backtest is claimed.
 
 ## 1. Project overview
 
 We are investigating whether resting **$0.01 limit BUY orders on both YES and NO** in Kalshi's **15-minute Bitcoin Up/Down series (`KXBTC15M`)** can capture rare, large price reversals at a frequency sufficient to produce positive **net** expected value. We will collect market and trade data, distinguish observable trades from hypothetical order fills, and test a cooldown rule after successful 1¢ flips.
+
+### Collect and analyze data
+
+Run `python3 collector.py` to collect markets that **closed yesterday in UTC**. Use `--start YYYY-MM-DD --end YYYY-MM-DD` for a date range; both dates are included. The script needs Python 3.9+ and internet access, but no API key.
+
+**Collected so far:** November 15, 2026 UTC—one calendar day of market closes, from 00:00 through 23:45 UTC. That is **not a rolling last 24 hours**. It covers 96 markets, including one that opened at 23:45 the previous day.
+
+For each selected market, the collector fetches its metadata and settlement result, all public non-block trades during that market, and 1-minute candles. It does not collect order-book history or place orders. Data goes to `data/kalshi_compact.sqlite3`: complete market and candle records, individual 1–5¢ YES/NO trades, and minute-level counts and volume for other trades. Rerunning a date skips completed trade and candle downloads.
+
+Run `python3 analyze.py` to summarize the 1¢ trades. The report describes public trades; it cannot tell whether our own order would have filled.
 
 The relevant market is the **Kalshi KXBTC15M contract**, whose settlement uses the official **CF Benchmarks Bitcoin Real-Time Index (BRTI)** under its contract terms. It is **not** a BTC/USDT contract; exchange BTC/USDT quotes cannot substitute for Kalshi's official settlement result.
 
@@ -59,24 +69,22 @@ A 1% win rate is **gross break-even before costs**. Fees, rounding, actual fill 
 
 Endpoint availability, schemas, pagination, fee rules, and historical access should be checked against current [Kalshi API documentation](https://docs.kalshi.com/). Public order-book data does not reveal our hypothetical position in the matching queue.
 
-### Required fields
+### Future data needs
 
 - Market ticker/ID, series, open/close timestamps, official settlement result.
 - YES/NO bid levels, displayed quantities, trade price/quantity, execution timestamp, and available volume.
 - Request/capture timestamps, response status, source URL, pagination cursor, and collection errors.
 - Flags for missing data, market review, delayed settlement, and malformed observations.
 
-Store **unaltered raw API responses in JSON/JSONL**, then normalize validated records into **CSV or SQLite** for analysis. Preserve UTC timestamps and precise decimal price representations.
+The compact database keeps raw market and candle records, individual 1–5¢ trades, and summaries for other trades.
 
 ## 4. Collector deliverable
 
-Our Week 1 objective is to build a **Python, read-only Kalshi API collector** that:
+The current read-only collector and 1¢ analysis cover one day. Remaining research work is to:
 
-- Targets **at least 30 days** of historical 15-minute BTC market observations; **up to six months** is preferable if obtainable.
-- Records raw JSON, market IDs, timestamps, YES/NO prices, order books, trade volumes, and settled results.
-- Identifies **observed 1¢ trades** and follows their associated markets to official settlement; these are **trade candidates**, not confirmed strategy fills.
-- Handles **pagination, rate limits, network errors, and missing observations**.
-- Stores data in a reproducible, structured format for statistical analysis and future backtesting.
+- Expand to **at least 30 days** of observations and audit missing periods.
+- Compare cooldown and other hypotheses on data held out from the initial research period.
+- Collect live order books if execution and fill analysis becomes worthwhile.
 
 **Important:** A live collector started today cannot retroactively reconstruct historical order-book snapshots. Historical trades, candlesticks, and outcomes can support descriptive analysis, but do not prove that a resting 1¢ bid would have filled.
 
@@ -85,22 +93,18 @@ Our Week 1 objective is to build a **Python, read-only Kalshi API collector** th
 ```mermaid
 flowchart TD
     A[Kalshi read-only API] --> B[Python collector]
-    B --> C[Raw JSON / JSONL]
-    C --> D[Validation and normalization]
-    D --> E[SQLite / CSV]
-    E --> F[1¢ trade-candidate analysis]
-    F --> G[Win-rate and uncertainty report]
-    G --> H[Cooldown comparisons and research conclusions]
-    H --> I[Future queue-aware paper trading]
+    B --> C[SQLite markets, candles, extreme trades, other-trade summaries]
+    C --> D[1¢ trade summary]
+    D --> E[Future research and paper testing]
 ```
 
 | Component | Technology | Purpose |
 |---|---|---|
 | Data source | Kalshi API | Retrieve market data |
 | Collector | Python | Automate read-only collection |
-| Raw storage | JSON / JSONL | Preserve original observations |
-| Structured storage | SQLite / CSV | Enable reproducible queries |
-| Analysis | Pandas / NumPy or Python | Evaluate 1¢ candidates and cooldowns |
+| Raw storage | `raw_json` for markets and candles | Preserve complete market metadata and candles |
+| Structured storage | SQLite | Enable reproducible queries |
+| Analysis | Python | Summarize observed 1¢ trades |
 | Future execution testing | Paper trading / fill-aware simulation | Assess realizable fills and cancellation behavior |
 
 ## 6. Existing Week 1 research files
@@ -124,7 +128,7 @@ kalshi_nov13/
 └── examples/synthetic/
 ```
 
-The earlier `kalshi_nov13/` documentation describes the commands below. **This new independent repository contains different starter code**, so use the new commands under **Quick start** instead:
+The earlier `kalshi_nov13/` documentation describes the commands below. **This independent repository has its own collector**, so use the commands under **Run the collector** instead:
 
 ```bash
 python collector.py --once --data-dir data
@@ -133,7 +137,7 @@ python -m unittest test_collector.py -v
 python analyze.py --db data/normalized.sqlite3 --out analysis
 ```
 
-The documented outputs are `data/raw_responses.jsonl`, `data/normalized.sqlite3`, and analysis reports such as `analysis/candidate_trades.csv` and `analysis/summary.json`. Confirm the commands against the actual code before running them. Keep API keys and sensitive files out of Git.
+Those are outputs from the earlier folder, not this repository. The compact collector writes `data/kalshi_compact.sqlite3`; keep local data and any future API keys out of Git.
 
 ## 7. Evaluation and success criteria
 

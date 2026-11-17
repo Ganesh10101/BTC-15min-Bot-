@@ -2,15 +2,12 @@
 
 ```mermaid
 flowchart TD
- A[Kalshi public API GET] --> B[collector.py]
- B --> C[Append-only raw JSONL]
- C --> D[Future validation and normalization]
- D --> E[SQLite / CSV]
- E --> F[Observed 1-cent trade candidate analysis]
- F --> G[Confidence intervals and cooldown research]
- G --> H[Future fill-aware paper testing]
+ A[Kalshi public REST API] --> B[collector.py]
+ B --> C[SQLite: markets, candles, extreme trades, other-trade summaries]
+ C --> D[analyze.py: observed 1-cent trades]
+ D --> E[Future fill-aware paper testing]
 ```
 
-**Implemented:** read-only snapshot collection to JSONL, synthetic data generator, CSV candidate summary, and toy assumed-fill backtester.
+**Implemented:** read-only backfill by UTC market close date, archive cutoff handling, pagination, retries, SQLite storage with resumable per-market trade/candle downloads, and descriptive 1-cent trade analysis.
 
-**Planned:** historical backfill, SQLite ingestion, execution-aware dual-side order simulations, cancellation latency, out-of-sample validation.
+**Planned:** live order-book capture, execution-aware simulations, and out-of-sample validation.
